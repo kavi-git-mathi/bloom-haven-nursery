@@ -172,9 +172,9 @@ function createPlantCard(plant) {
     const card = document.createElement('div');
     card.className = 'plant-card';
     
+    // FIXED: Properly handle the image HTML without syntax errors
     const imageHtml = plant.image 
-        ? `<img src="${plant.image}" alt="${plant.name}" class="plant-img" onerror="this.style.display='none'; this.parentNode.innerHTML='<div class=\"plant-image-placeholder\"><i class=\"fas fa-leaf\"></i></div>';">
-        `
+        ? `<img src="${plant.image}" alt="${plant.name}" class="plant-img">`
         : `<div class="plant-image-placeholder"><i class="fas fa-leaf"></i></div>`;
     
     card.innerHTML = `
@@ -195,37 +195,26 @@ function createPlantCard(plant) {
     
     return card;
 }
-
-async function addToCart(plantId) {
-    if (!currentUser) {
-        showModal('login-modal');
-        return;
-    }
-    
-    try {
-        const response = await fetch(`${API_BASE}/cart`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                plant_id: plantId,
-                quantity: 1
-            })
-        });
-        
-        if (response.ok) {
-            loadCart();
-            showNotification('Plant added to cart!');
-        } else {
-            const error = await response.json();
-            alert(error.error);
-        }
-    } catch (error) {
-        console.error('Error adding to cart:', error);
-        showNotification('Error adding to cart. Please try again.');
-    }
-}
+a// In the renderCart function, update this part:
+cartItem.innerHTML = `
+    <div class="cart-item-image">
+        ${item.plant_image ? `<img src="${item.plant_image}" alt="${item.plant_name}">` : '<i class="fas fa-leaf"></i>'}
+    </div>
+    <div class="cart-item-info">
+        <div class="cart-item-name">${item.plant_name}</div>
+        <div class="cart-item-price">$${item.plant_price.toFixed(2)}</div>
+    </div>
+    <div class="cart-item-actions">
+        <div class="quantity-controls">
+            <button class="quantity-btn decrease" data-plant-id="${item.plant_id}">-</button>
+            <span>${item.quantity}</span>
+            <button class="quantity-btn increase" data-plant-id="${item.plant_id}">+</button>
+        </div>
+        <button class="remove-btn" data-plant-id="${item.plant_id}">
+            <i class="fas fa-trash"></i>
+        </button>
+    </div>
+`;
 
 async function loadCart() {
     if (!currentUser) return;
