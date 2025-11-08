@@ -156,58 +156,41 @@ except Exception as e:
             }
         }
         
-        stage('SonarQube Scanner Setup') {
-            steps {
-                script {
-                    echo "Setting up SonarQube Scanner..."
-                    sh '''
-                        # Install unzip if not available
-                        if ! command -v unzip &> /dev/null; then
-                            echo "Installing unzip..."
-                            sudo apt-get update && sudo apt-get install -y unzip
-                        fi
-                        
-                        # Download sonar-scanner if not available
-                        if ! command -v sonar-scanner &> /dev/null; then
-                            echo "Downloading SonarQube Scanner..."
-                            wget -q https://binaries.sonarsource.com/Distribution/sonar-scanner-cli/sonar-scanner-cli-4.8.0.2856-linux.zip
-                            unzip -q sonar-scanner-cli-4.8.0.2856-linux.zip
-                            export PATH=$PWD/sonar-scanner-4.8.0.2856-linux/bin:$PATH
-                            echo "✅ SonarQube Scanner installed"
-                        else
-                            echo "✅ SonarQube Scanner already available"
-                        fi
-                        
-                        sonar-scanner --version
-                    '''
-                }
-            }
-        }
-        
         stage('SonarQube Scan') {
             steps {
                 script {
                     echo "Running SonarQube Analysis..."
                     
                     withCredentials([string(credentialsId: SONARQUBE_CREDENTIALS, variable: 'SONAR_TOKEN')]) {
+                        // Use Jenkins SonarQube Scanner - no manual download needed
                         sh """
                             cd backend
                             . venv/bin/activate
                             
                             echo "=== Running SonarQube Analysis ==="
-                            sonar-scanner \
-                                -Dsonar.projectKey=${SONAR_PROJECT_KEY} \
-                                -Dsonar.projectName="${SONAR_PROJECT_NAME}" \
-                                -Dsonar.projectVersion=${BUILD_NUMBER} \
-                                -Dsonar.sources=. \
-                                -Dsonar.host.url=http://20.200.126.173:9000 \
-                                -Dsonar.login=${SONAR_TOKEN} \
-                                -Dsonar.python.coverage.reportPaths=../test-reports/backend-coverage.xml \
-                                -Dsonar.python.xunit.reportPath=../test-reports/backend-junit.xml \
-                                -Dsonar.tests=tests \
-                                -Dsonar.scm.disabled=true \
-                                -Dsonar.sourceEncoding=UTF-8
+                            echo "Using Jenkins-configured SonarQube Scanner"
                         """
+                        
+                        // This uses the Jenkins SonarQube scanner configuration
+                        withSonarQubeEnv('SonarQube') {
+                            sh """
+                                cd backend
+                                . venv/bin/activate
+                                
+                                sonar-scanner \
+                                    -Dsonar.projectKey=${SONAR_PROJECT_KEY} \
+                                    -Dsonar.projectName="${SONAR_PROJECT_NAME}" \
+                                    -Dsonar.projectVersion=${BUILD_NUMBER} \
+                                    -Dsonar.sources=. \
+                                    -Dsonar.host.url=http://20.200.126.173:9000 \
+                                    -Dsonar.login=${SONAR_TOKEN} \
+                                    -Dsonar.python.coverage.reportPaths=../test-reports/backend-coverage.xml \
+                                    -Dsonar.python.xunit.reportPath=../test-reports/backend-junit.xml \
+                                    -Dsonar.tests=tests \
+                                    -Dsonar.scm.disabled=true \
+                                    -Dsonar.sourceEncoding=UTF-8
+                            """
+                        }
                     }
                 }
             }
