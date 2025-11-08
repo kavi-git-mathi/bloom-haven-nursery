@@ -3,6 +3,7 @@ pipeline {
     environment {
         APP_NAME = 'bloom-haven-nursery'
         DOCKER_IMAGE = "kavitharc/${APP_NAME}:${BUILD_NUMBER}"
+        DOCKERHUB_CREDENTIALS = 'docker-credentials'
     }
     
     stages {
@@ -39,17 +40,32 @@ pipeline {
                         . venv/bin/activate
                         pip install pytest pytest-cov
                         mkdir -p ../test-reports
-                        
-                        # Run tests
                         python -m pytest tests/ --junitxml=../test-reports/junit.xml --cov-report=xml --cov=. || echo "Tests completed"
-                        
-                        if [ -f coverage.xml ]; then
-                            mv coverage.xml ../test-reports/coverage.xml
-                            echo "✅ Coverage report generated"
-                        fi
                     '''
                 }
                 junit allowEmptyResults: true, testResults: 'test-reports/junit.xml'
+            }
+        }
+        
+        stage('Docker Build - Backend') {
+            steps {
+                script {
+                    echo "🐳 Building Docker Image..."
+                    sh '''
+                        cd backend
+                        # Create Dockerfile
+                        cat > Dockerfile << 'EOF'
+FROM python:3.9-slim
+WORKDIR /app
+COPY . .
+RUN pip install --no-cache-dir -r requirements.txt
+EXPOSE 5000
+CMD ["python", "app.py"]
+EOF
+                        docker build -t ${DOCKER_IMAGE} .
+                        echo "✅ Docker image built: ${DOCKER_IMAGE}"
+                    '''
+                }
             }
         }
     }
@@ -59,8 +75,8 @@ pipeline {
             echo "🎯 Build completed with result: ${currentBuild.result}"
         }
         success {
-            echo "✅ First three stages completed successfully!"
-            echo "Next: Add Docker Build stage"
+            echo "✅ First four stages completed successfully!"
+            echo "Next: Add Docker Push stage"
         }
     }
 }
