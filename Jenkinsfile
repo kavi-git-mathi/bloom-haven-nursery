@@ -18,6 +18,11 @@ pipeline {
         SONARQUBE_CREDENTIALS = 'sonarqube-token'
     }
     
+    tools {
+        // This will use the Jenkins-configured SonarQube Scanner
+        sonarqubeScanner 'sonar-scanner'
+    }
+    
     stages {
         stage('Git Checkout') {
             steps {
@@ -162,21 +167,12 @@ except Exception as e:
                     echo "Running SonarQube Analysis..."
                     
                     withCredentials([string(credentialsId: SONARQUBE_CREDENTIALS, variable: 'SONAR_TOKEN')]) {
-                        // Use Jenkins SonarQube Scanner - no manual download needed
-                        sh """
-                            cd backend
-                            . venv/bin/activate
-                            
-                            echo "=== Running SonarQube Analysis ==="
-                            echo "Using Jenkins-configured SonarQube Scanner"
-                        """
-                        
-                        // This uses the Jenkins SonarQube scanner configuration
                         withSonarQubeEnv('SonarQube') {
                             sh """
                                 cd backend
                                 . venv/bin/activate
                                 
+                                echo "=== Running SonarQube Analysis ==="
                                 sonar-scanner \
                                     -Dsonar.projectKey=${SONAR_PROJECT_KEY} \
                                     -Dsonar.projectName="${SONAR_PROJECT_NAME}" \
