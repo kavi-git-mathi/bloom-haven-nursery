@@ -18,11 +18,6 @@ pipeline {
         SONARQUBE_CREDENTIALS = 'sonarqube-token'
     }
     
-    tools {
-        // Use the correct tool name from the error message
-        sonarRunner 'sonar-scanner'
-    }
-    
     stages {
         stage('Git Checkout') {
             steps {
@@ -37,6 +32,27 @@ pipeline {
                         java -version
                         docker --version
                         echo "Git Commit: $(git log -1 --pretty=%H)"
+                    '''
+                }
+            }
+        }
+        stage('Install SonarQube Scanner') {
+            steps {
+                script {
+                    echo "Installing SonarQube Scanner..."
+                    sh '''
+                        # Install sonar-scanner using Python (no unzip needed)
+                        if ! command -v sonar-scanner &> /dev/null; then
+                            echo "Installing SonarQube Scanner using Python..."
+                            # Download and extract using Python
+                            wget -q https://binaries.sonarsource.com/Distribution/sonar-scanner-cli/sonar-scanner-cli-4.8.0.2856-linux.zip
+                            python3 -c "import zipfile; zipfile.ZipFile('sonar-scanner-cli-4.8.0.2856-linux.zip').extractall()"
+                            export PATH=$PWD/sonar-scanner-4.8.0.2856-linux/bin:$PATH
+                            echo "✅ SonarQube Scanner installed"
+                        else
+                            echo "✅ SonarQube Scanner already available"
+                        fi
+                        sonar-scanner --version
                     '''
                 }
             }
