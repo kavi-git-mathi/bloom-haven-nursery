@@ -22,18 +22,11 @@ spec:
         env:
         - name: FLASK_ENV
           value: "production"
-        - name: FRONTEND_URL
-          value: "http://nursery-frontend-svc"
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: nursery-backend-svc
-spec:
-  type: ClusterIP
-  selector:
-    app: nursery-backend
-  ports:
-    - protocol: TCP
-      port: 5000
-      targetPort: 5000
+        # Multiple ways to set the host
+        - name: HOST
+          value: "0.0.0.0"
+        - name: FLASK_RUN_HOST
+          value: "0.0.0.0"
+        # Explicit command to override any CMD in Dockerfile
+        command: ["python"]
+        args: ["app.py", "--host=0.0.0.0", "--port=5000"]
