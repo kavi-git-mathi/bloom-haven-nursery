@@ -97,7 +97,7 @@ def test_flask_app():
         assert app is not None
         print("✅ Flask app imported successfully")
     except Exception as e:
-        print(f"⚠️ Flask import issue: {e}")
+                        print(f"⚠️ Flask import issue: {e}")
 EOF
                             python -m pytest tests/ --junitxml=../test-reports/backend-junit.xml --cov-report=xml --cov=. || echo "Sample tests executed"
                         fi
@@ -125,7 +125,7 @@ EOF
                         cd backend
                         . venv/bin/activate
                         
-                        # Test Flask app import - FIXED INDENTATION
+                        # Test Flask app import
                         echo "=== Testing Flask App Import ==="
                         python -c "
 try:
@@ -156,21 +156,38 @@ except Exception as e:
             }
         }
         
-        stage('SonarQube Scan') {
+        stage('SonarQube Scanner Setup') {
             steps {
                 script {
                     echo "Setting up SonarQube Scanner..."
-                    
                     sh '''
+                        # Install unzip if not available
+                        if ! command -v unzip &> /dev/null; then
+                            echo "Installing unzip..."
+                            sudo apt-get update && sudo apt-get install -y unzip
+                        fi
+                        
                         # Download sonar-scanner if not available
                         if ! command -v sonar-scanner &> /dev/null; then
                             echo "Downloading SonarQube Scanner..."
                             wget -q https://binaries.sonarsource.com/Distribution/sonar-scanner-cli/sonar-scanner-cli-4.8.0.2856-linux.zip
                             unzip -q sonar-scanner-cli-4.8.0.2856-linux.zip
                             export PATH=$PWD/sonar-scanner-4.8.0.2856-linux/bin:$PATH
+                            echo "✅ SonarQube Scanner installed"
+                        else
+                            echo "✅ SonarQube Scanner already available"
                         fi
+                        
                         sonar-scanner --version
                     '''
+                }
+            }
+        }
+        
+        stage('SonarQube Scan') {
+            steps {
+                script {
+                    echo "Running SonarQube Analysis..."
                     
                     withCredentials([string(credentialsId: SONARQUBE_CREDENTIALS, variable: 'SONAR_TOKEN')]) {
                         sh """
