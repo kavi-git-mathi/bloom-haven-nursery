@@ -6,7 +6,7 @@ pipeline{
                 script {
                     echo "Checking out code from repository..."
                     checkout scmGit(
-                        branches: [[name: '*/main']],
+                        branches: [[name: '*/master']],
                         extensions: [],
                         userRemoteConfigs: [[url: 'https://github.com/kavi-git-mathi/bloom-haven-nursery.git']]
                     )
