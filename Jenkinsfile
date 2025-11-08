@@ -3,7 +3,7 @@ pipeline {
     environment {
         // Application settings
         APP_NAME = 'bloom-haven-nursery'
-        DOCKER_IMAGE = "kavithaozhu/${APP_NAME}:${BUILD_NUMBER}"
+        DOCKER_IMAGE = "kavitharc/${APP_NAME}:${BUILD_NUMBER}"
         
         // SonarQube settings
         SONAR_PROJECT_KEY = 'bloom_haven_nursery'
@@ -47,8 +47,6 @@ pipeline {
                         
                         # Create virtual environment
                         python3 -m venv venv
-                        
-                        # Use . instead of source for sh compatibility
                         . venv/bin/activate
                         
                         # Install dependencies
@@ -89,7 +87,7 @@ pipeline {
                         else
                             echo "⚠️ No tests found, creating sample test..."
                             mkdir -p tests
-                            cat > tests/test_sample.py << EOF
+                            cat > tests/test_sample.py << 'EOF'
 def test_example():
     assert 1 + 1 == 2
 
@@ -127,17 +125,17 @@ EOF
                         cd backend
                         . venv/bin/activate
                         
-                        # Test Flask app import
+                        # Test Flask app import - FIXED INDENTATION
                         echo "=== Testing Flask App Import ==="
                         python -c "
-                        try:
-                            from app import app
-                            print('✅ Flask app imported successfully')
-                            print('App name:', app.name if hasattr(app, 'name') else 'Unknown')
-                        except Exception as e:
-                            print('❌ Error importing Flask app:', str(e))
-                            exit(1)
-                        "
+try:
+    from app import app
+    print('✅ Flask app imported successfully')
+    print('App name:', app.name if hasattr(app, 'name') else 'Unknown')
+except Exception as e:
+    print('❌ Error importing Flask app:', str(e))
+    exit(1)
+"
                         
                         # Test server startup (non-blocking)
                         echo "=== Testing Server Startup ==="
@@ -281,11 +279,11 @@ CMD ["nginx", "-g", "daemon off;"]
 EOF
                             
                             echo "=== Building Frontend Image ==="
-                            docker build -t kavithaozhu/bloom-haven-nursery-frontend:${BUILD_NUMBER} .
+                            docker build -t kavitharc/bloom-haven-nursery-frontend:${BUILD_NUMBER} .
                             
                             echo "=== Pushing Frontend Image ==="
                             echo \$DOCKERHUB_PAT | docker login -u \$DOCKERHUB_USER --password-stdin
-                            docker push kavithaozhu/bloom-haven-nursery-frontend:${BUILD_NUMBER}
+                            docker push kavitharc/bloom-haven-nursery-frontend:${BUILD_NUMBER}
                             echo "✅ Frontend image pushed"
                         '''
                     }
@@ -313,7 +311,7 @@ EOF
                                 --exit-code 0
                                 
                             # Scan frontend image  
-                            trivy image kavithaozhu/bloom-haven-nursery-frontend:${BUILD_NUMBER} \
+                            trivy image kavitharc/bloom-haven-nursery-frontend:${BUILD_NUMBER} \
                                 --format template \
                                 --template "@contrib/html.tpl" \
                                 --output security-reports/frontend-trivy.html \
@@ -348,14 +346,14 @@ EOF
                 echo "=== BUILD COMPLETED ==="
                 echo "Application: ${APP_NAME}"
                 echo "Backend Image: ${DOCKER_IMAGE}"
-                echo "Frontend Image: kavithaozhu/bloom-haven-nursery-frontend:${BUILD_NUMBER}"
+                echo "Frontend Image: kavitharc/bloom-haven-nursery-frontend:${BUILD_NUMBER}"
                 echo "Build Result: ${currentBuild.result}"
                 echo "Build Number: ${BUILD_NUMBER}"
                 
                 sh '''
                     echo "=== DEPLOYMENT ==="
                     echo "Backend:  docker run -d -p 5000:5000 ${DOCKER_IMAGE}"
-                    echo "Frontend: docker run -d -p 3000:80 kavithaozhu/bloom-haven-nursery-frontend:${BUILD_NUMBER}"
+                    echo "Frontend: docker run -d -p 3000:80 kavitharc/bloom-haven-nursery-frontend:${BUILD_NUMBER}"
                     echo ""
                     echo "Access:"
                     echo "  Frontend: http://localhost:3000"
