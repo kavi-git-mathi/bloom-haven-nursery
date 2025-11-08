@@ -163,13 +163,13 @@ EOF
         success {
             echo "🎉 PIPELINE SUCCESS!"
             echo "✅ Code compiled and tested"
-            echo "✅ Docker images built and scanned"
+            echo "✅ Docker images built and scanned successfully"
             echo "✅ Images pushed to Docker Hub"
             echo "🐳 Backend:  ${DOCKER_IMAGE}"
             echo "🎨 Frontend: ${FRONTEND_IMAGE}"
         }
         failure {
-            echo "❌ Pipeline failed - check stage logs above"
+            echo "❌ Pipeline failed - check stage logs above to identify the issue."
         }
     }
 }
