@@ -183,7 +183,7 @@ except Exception as e:
                                 -Dsonar.projectName="${SONAR_PROJECT_NAME}" \
                                 -Dsonar.projectVersion=${BUILD_NUMBER} \
                                 -Dsonar.sources=. \
-                                -Dsonar.host.url=http://localhost:9000 \
+                                -Dsonar.host.url=http://20.200.126.173:9000 \
                                 -Dsonar.login=${SONAR_TOKEN} \
                                 -Dsonar.python.coverage.reportPaths=../test-reports/backend-coverage.xml \
                                 -Dsonar.python.xunit.reportPath=../test-reports/backend-junit.xml \
@@ -356,8 +356,8 @@ EOF
                     echo "Frontend: docker run -d -p 3000:80 kavitharc/bloom-haven-nursery-frontend:${BUILD_NUMBER}"
                     echo ""
                     echo "Access:"
-                    echo "  Frontend: http://localhost:3000"
-                    echo "  Backend API: http://localhost:5000"
+                    echo "  Frontend: http://20.200.126.173:3000"
+                    echo "  Backend API: http://20.200.126.173:5000"
                 '''
             }
         }
