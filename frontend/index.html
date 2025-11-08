@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bloom Haven Nursery - Your Gardening Paradise</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Roboto:wght@300;400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="nav-logo">
+                <i class="fas fa-seedling"></i>
+                <span>Bloom Haven</span>
+            </div>
+            <div class="nav-menu">
+                <a href="#" class="nav-link active" data-section="home">Home</a>
+                <a href="#" class="nav-link" data-section="flowering">Flowering Plants</a>
+                <a href="#" class="nav-link" data-section="indoor">Indoor Plants</a>
+                <a href="#" class="nav-link" data-section="vegetables">Vegetables</a>
+                <a href="#" class="nav-link" data-section="contact">Contact</a>
+                <div class="nav-auth">
+                    <button id="login-btn" class="btn-outline">Login</button>
+                    <button id="signup-btn" class="btn-primary">Sign Up</button>
+                </div>
+                <div class="nav-user" style="display: none;">
+                    <span id="user-name">User</span>
+                    <button id="cart-btn" class="btn-icon">
+                        <i class="fas fa-shopping-cart"></i>
+                        <span id="cart-count">0</span>
+                    </button>
+                    <button id="logout-btn" class="btn-outline">Logout</button>
+                </div>
+            </div>
+            <div class="hamburger">
+                <span></span>
+                <span></span>
+                <span></span>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main>
+        <!-- Home Section -->
+        <section id="home" class="section active">
+            <div class="hero">
+                <div class="hero-content">
+                    <h1>Welcome to Bloom Haven Nursery</h1>
+                    <p>Your one-stop destination for beautiful plants to transform your home and garden</p>
+                    <button class="btn-primary btn-large">Explore Our Collection</button>
+                </div>
+                <div class="hero-image">
+                    <img src="images/hero-plant.jpg" alt="Beautiful plants from Bloom Haven">
+                </div>
+            </div>
+
+            <div class="features">
+                <div class="feature-card">
+                    <i class="fas fa-truck"></i>
+                    <h3>Free Delivery</h3>
+                    <p>On orders over $50</p>
+                </div>
+                <div class="feature-card">
+                    <i class="fas fa-seedling"></i>
+                    <h3>Quality Plants</h3>
+                    <p>Healthy and vibrant</p>
+                </div>
+                <div class="feature-card">
+                    <i class="fas fa-headset"></i>
+                    <h3>Expert Support</h3>
+                    <p>Gardening advice</p>
+                </div>
+            </div>
+
+            <div class="categories">
+                <h2>Plant Categories</h2>
+                <div class="category-grid">
+                    <div class="category-card" data-section="flowering">
+                        <img src="images/category-flowering.jpg" alt="Flowering Plants">
+                        <h3>Flowering Plants</h3>
+                        <p>Add color and fragrance to your garden</p>
+                    </div>
+                    <div class="category-card" data-section="indoor">
+                        <img src="images/category-indoor.jpg" alt="Indoor Plants">
+                        <h3>Indoor Plants</h3>
+                        <p>Bring nature inside your home</p>
+                    </div>
+                    <div class="category-card" data-section="vegetables">
+                        <img src="images/category-vegetables.jpg" alt="Vegetable Plants">
+                        <h3>Vegetable Plants</h3>
+                        <p>Grow your own fresh produce</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Flowering Plants Section -->
+        <section id="flowering" class="section">
+            <div class="section-header">
+                <h2>Flowering Plants</h2>
+                <p>Brighten your garden with our beautiful flowering plants</p>
+            </div>
+            <div class="plants-grid" id="flowering-plants">
+                <!-- Plants will be loaded here dynamically -->
+            </div>
+        </section>
+
+        <!-- Indoor Plants Section -->
+        <section id="indoor" class="section">
+            <div class="section-header">
+                <h2>Indoor Plants</h2>
+                <p>Bring life and freshness to your indoor spaces</p>
+            </div>
+            <div class="plants-grid" id="indoor-plants">
+                <!-- Plants will be loaded here dynamically -->
+            </div>
+        </section>
+
+        <!-- Vegetable Plants Section -->
+        <section id="vegetables" class="section">
+            <div class="section-header">
+                <h2>Vegetable Plants</h2>
+                <p>Grow your own fresh and organic vegetables</p>
+            </div>
+            <div class="plants-grid" id="vegetable-plants">
+                <!-- Plants will be loaded here dynamically -->
+            </div>
+        </section>
+
+        <!-- Contact Section -->
+        <section id="contact" class="section">
+            <div class="section-header">
+                <h2>Contact Us</h2>
+                <p>We'd love to hear from you</p>
+            </div>
+            <div class="contact-container">
+                <div class="contact-info">
+                    <h3>Get in Touch</h3>
+                    <div class="contact-item">
+                        <i class="fas fa-map-marker-alt"></i>
+                        <div>
+                            <h4>Address</h4>
+                            <p>123 Garden Lane, Bloomington, BL 12345</p>
+                        </div>
+                    </div>
+                    <div class="contact-item">
+                        <i class="fas fa-phone"></i>
+                        <div>
+                            <h4>Phone</h4>
+                            <p>(555) 123-4567</p>
+                        </div>
+                    </div>
+                    <div class="contact-item">
+                        <i class="fas fa-envelope"></i>
+                        <div>
+                            <h4>Email</h4>
+                            <p>info@bloomhaven.com</p>
+                        </div>
+                    </div>
+                    <div class="contact-item">
+                        <i class="fas fa-clock"></i>
+                        <div>
+                            <h4>Opening Hours</h4>
+                            <p>Mon-Sat: 9am-6pm<br>Sun: 10am-4pm</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="contact-form">
+                    <h3>Send us a Message</h3>
+                    <form id="contact-form">
+                        <div class="form-group">
+                            <input type="text" id="contact-name" placeholder="Your Name" required>
+                        </div>
+                        <div class="form-group">
+                            <input type="email" id="contact-email" placeholder="Your Email" required>
+                        </div>
+                        <div class="form-group">
+                            <textarea id="contact-message" placeholder="Your Message" rows="5" required></textarea>
+                        </div>
+                        <button type="submit" class="btn-primary">Send Message</button>
+                    </form>
+                </div>
+            </div>
+        </section>
+
+        <!-- Cart Sidebar -->
+        <div id="cart-sidebar" class="cart-sidebar">
+            <div class="cart-header">
+                <h3>Your Cart</h3>
+                <button id="close-cart" class="btn-icon">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="cart-items" id="cart-items">
+                <!-- Cart items will be loaded here -->
+            </div>
+            <div class="cart-footer">
+                <div class="cart-total">
+                    <span>Total:</span>
+                    <span id="cart-total">$0.00</span>
+                </div>
+                <button id="checkout-btn" class="btn-primary btn-full">Proceed to Checkout</button>
+            </div>
+        </div>
+
+        <!-- Checkout Modal -->
+        <div id="checkout-modal" class="modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3>Checkout</h3>
+                    <button id="close-checkout" class="btn-icon">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <form id="checkout-form">
+                        <div class="form-group">
+                            <label for="delivery-address">Delivery Address</label>
+                            <textarea id="delivery-address" required></textarea>
+                        </div>
+                        <div class="form-group">
+                            <label for="delivery-option">Delivery Option</label>
+                            <select id="delivery-option" required>
+                                <option value="">Select delivery option</option>
+                                <option value="standard">Standard Delivery (3-5 days) - $5.99</option>
+                                <option value="express">Express Delivery (1-2 days) - $9.99</option>
+                                <option value="pickup">Store Pickup - Free</option>
+                            </select>
+                        </div>
+                        <div class="order-summary">
+                            <h4>Order Summary</h4>
+                            <div id="order-items">
+                                <!-- Order items will be loaded here -->
+                            </div>
+                            <div class="order-total">
+                                <span>Total:</span>
+                                <span id="order-total">$0.00</span>
+                            </div>
+                        </div>
+                        <button type="submit" class="btn-primary btn-full">Place Order</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Auth Modals -->
+        <div id="login-modal" class="modal">
+            <div class="modal-content auth-modal">
+                <div class="modal-header">
+                    <h3>Login</h3>
+                    <button class="close-auth btn-icon">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <form id="login-form">
+                        <div class="form-group">
+                            <input type="email" id="login-email" placeholder="Email" required>
+                        </div>
+                        <div class="form-group">
+                            <input type="password" id="login-password" placeholder="Password" required>
+                        </div>
+                        <button type="submit" class="btn-primary btn-full">Login</button>
+                    </form>
+                    <p class="auth-switch">Don't have an account? <a href="#" id="show-signup">Sign up</a></p>
+                </div>
+            </div>
+        </div>
+
+        <div id="signup-modal" class="modal">
+            <div class="modal-content auth-modal">
+                <div class="modal-header">
+                    <h3>Sign Up</h3>
+                    <button class="close-auth btn-icon">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <form id="signup-form">
+                        <div class="form-group">
+                            <input type="text" id="signup-name" placeholder="Full Name" required>
+                        </div>
+                        <div class="form-group">
+                            <input type="email" id="signup-email" placeholder="Email" required>
+                        </div>
+                        <div class="form-group">
+                            <input type="password" id="signup-password" placeholder="Password" required>
+                        </div>
+                        <button type="submit" class="btn-primary btn-full">Sign Up</button>
+                    </form>
+                    <p class="auth-switch">Already have an account? <a href="#" id="show-login">Login</a></p>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="footer-content">
+            <div class="footer-section">
+                <div class="footer-logo">
+                    <i class="fas fa-seedling"></i>
+                    <span>Bloom Haven</span>
+                </div>
+                <p>Your trusted partner in creating beautiful gardens and green spaces since 2010.</p>
+            </div>
+            <div class="footer-section">
+                <h4>Quick Links</h4>
+                <ul>
+                    <li><a href="#" data-section="home">Home</a></li>
+                    <li><a href="#" data-section="flowering">Flowering Plants</a></li>
+                    <li><a href="#" data-section="indoor">Indoor Plants</a></li>
+                    <li><a href="#" data-section="vegetables">Vegetables</a></li>
+                </ul>
+            </div>
+            <div class="footer-section">
+                <h4>Customer Service</h4>
+                <ul>
+                    <li><a href="#" data-section="contact">Contact Us</a></li>
+                    <li><a href="#">Shipping Policy</a></li>
+                    <li><a href="#">Returns & Refunds</a></li>
+                    <li><a href="#">FAQ</a></li>
+                </ul>
+            </div>
+            <div class="footer-section">
+                <h4>Connect With Us</h4>
+                <div class="social-links">
+                    <a href="#"><i class="fab fa-facebook"></i></a>
+                    <a href="#"><i class="fab fa-instagram"></i></a>
+                    <a href="#"><i class="fab fa-pinterest"></i></a>
+                    <a href="#"><i class="fab fa-twitter"></i></a>
+                </div>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>&copy; 2023 Bloom Haven Nursery. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <script src="js/script.js"></script>
+</body>
+</html>
