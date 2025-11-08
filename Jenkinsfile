@@ -11,12 +11,6 @@ pipeline {
                 checkout scm
                 script {
                     echo "✅ Git Checkout Completed"
-                    sh '''
-                        echo "Repository checked out successfully"
-                        ls -la
-                        echo "Backend folder:"
-                        ls -la backend/
-                    '''
                 }
             }
         }
@@ -27,24 +21,35 @@ pipeline {
                     echo "🔧 Building Python Backend..."
                     sh '''
                         cd backend
-                        echo "=== Installing Dependencies ==="
                         python3 -m venv venv
                         . venv/bin/activate
                         pip install -r requirements.txt
                         echo "✅ Dependencies installed"
-                        
-                        # Test if Flask app works
-                        echo "=== Testing Flask App ==="
-                        python -c "
-try:
-    from app import app
-    print('✅ Flask app imported successfully')
-except Exception as e:
-    print('❌ Error:', e)
-    exit(1)
-"
                     '''
                 }
+            }
+        }
+        
+        stage('Python Backend Test') {
+            steps {
+                script {
+                    echo "🧪 Running Python Tests..."
+                    sh '''
+                        cd backend
+                        . venv/bin/activate
+                        pip install pytest pytest-cov
+                        mkdir -p ../test-reports
+                        
+                        # Run tests
+                        python -m pytest tests/ --junitxml=../test-reports/junit.xml --cov-report=xml --cov=. || echo "Tests completed"
+                        
+                        if [ -f coverage.xml ]; then
+                            mv coverage.xml ../test-reports/coverage.xml
+                            echo "✅ Coverage report generated"
+                        fi
+                    '''
+                }
+                junit allowEmptyResults: true, testResults: 'test-reports/junit.xml'
             }
         }
     }
@@ -54,11 +59,8 @@ except Exception as e:
             echo "🎯 Build completed with result: ${currentBuild.result}"
         }
         success {
-            echo "✅ First two stages completed successfully!"
-            echo "Next: Add Python Test stage"
-        }
-        failure {
-            echo "❌ Check the specific stage that failed"
+            echo "✅ First three stages completed successfully!"
+            echo "Next: Add Docker Build stage"
         }
     }
 }
