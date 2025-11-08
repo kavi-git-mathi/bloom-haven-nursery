@@ -19,8 +19,8 @@ pipeline {
     }
     
     tools {
-        // This will use the Jenkins-configured SonarQube Scanner
-        sonarqubeScanner 'sonar-scanner'
+        // Use the correct tool name from the error message
+        sonarRunner 'sonar-scanner'
     }
     
     stages {
