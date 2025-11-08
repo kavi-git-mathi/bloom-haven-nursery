@@ -1,0 +1,39 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nursery-backend
+  labels:
+    app: nursery-backend
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: nursery-backend
+  template:
+    metadata:
+      labels:
+        app: nursery-backend
+    spec:
+      containers:
+      - name: nursery-backend
+        image: kavitharc/bloom-haven-nursery:21
+        ports:
+        - containerPort: 5000
+        env:
+        - name: FLASK_ENV
+          value: "production"
+        - name: FRONTEND_URL
+          value: "http://nursery-frontend-svc"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: nursery-backend-svc
+spec:
+  type: ClusterIP
+  selector:
+    app: nursery-backend
+  ports:
+    - protocol: TCP
+      port: 5000
+      targetPort: 5000
