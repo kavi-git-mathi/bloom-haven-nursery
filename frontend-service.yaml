@@ -8,5 +8,5 @@ spec:
     app: nursery-frontend
   ports:
     - protocol: TCP
-      port: 80
-      targetPort: 3000
+      port: 80           # External port
+      targetPort: 80     # Container port 
