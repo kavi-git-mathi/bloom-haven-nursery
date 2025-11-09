@@ -5,7 +5,6 @@ pipeline {
         DOCKER_IMAGE = "kavitharc/${APP_NAME}:${BUILD_NUMBER}"
         FRONTEND_IMAGE = "kavitharc/bloom-haven-nursery-frontend:${BUILD_NUMBER}"
         DOCKERHUB_CREDENTIALS = 'docker-credentials'
-        SONAR_SCANNER_HOME = tool 'sonar-scanner'
     }
     
     stages {
@@ -21,11 +20,8 @@ pipeline {
                 script {
                     echo "🔧 Installing Security Scanning Tools..."
                     sh '''
-                        # Install Trixy
+                        # Install Trixy only (SonarScanner is handled by Jenkins plugin)
                         curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh -s -- -b /usr/local/bin
-                        
-                        # Verify installations
-                        trivy --version
                         echo "✅ Security tools installed successfully"
                     '''
                 }
@@ -61,19 +57,12 @@ pipeline {
             steps {
                 script {
                     echo "🔍 Running SonarQube Analysis..."
-                    withSonarQubeEnv('sonarqube-server') {
+                    // Use the Jenkins-configured SonarScanner tool
+                    def scannerHome = tool 'SonarScanner'
+                    withSonarQubeEnv() {
                         sh """
                             cd backend
-                            ${SONAR_SCANNER_HOME}/bin/sonar-scanner \
-                              -Dsonar.projectKey=bloom-haven-nursery-backend \
-                              -Dsonar.projectName='Bloom Haven Nursery - Backend' \
-                              -Dsonar.sources=. \
-                              -Dsonar.host.url=\${SONAR_HOST_URL} \
-                              -Dsonar.login=\${SONAR_AUTH_TOKEN} \
-                              -Dsonar.python.coverage.reportPaths=../coverage.xml \
-                              -Dsonar.tests=tests \
-                              -Dsonar.test.inclusions='**/test_*.py,**/*_test.py' \
-                              -Dsonar.coverage.exclusions='**/tests/**,**/venv/**'
+                            ${scannerHome}/bin/sonar-scanner
                         """
                     }
                 }
@@ -89,17 +78,18 @@ pipeline {
                         
                         # Scan Python dependencies in backend
                         echo "📋 Scanning Python dependencies..."
-                        trivy fs backend/ \
+                        cd backend
+                        trivy fs . \
                             --format table \
-                            --output security-reports/source-scan-table.txt \
+                            --output ../security-reports/source-scan-table.txt \
                             --severity HIGH,CRITICAL \
                             --scanners vuln \
                             --exit-code 0
                         
                         # Generate JSON report for archiving
-                        trivy fs backend/ \
+                        trivy fs . \
                             --format json \
-                            --output security-reports/source-scan.json \
+                            --output ../security-reports/source-scan.json \
                             --severity HIGH,CRITICAL \
                             --scanners vuln \
                             --exit-code 0
@@ -107,9 +97,9 @@ pipeline {
                         echo "✅ Source code security scan completed"
                         
                         # Display summary
-                        if [ -f security-reports/source-scan-table.txt ]; then
-                            echo "=== SECURITY SCAN SUMMARY ==="
-                            cat security-reports/source-scan-table.txt
+                        if [ -f ../security-reports/source-scan-table.txt ]; then
+                            echo "=== PYTHON DEPENDENCY SECURITY SCAN ==="
+                            cat ../security-reports/source-scan-table.txt
                         fi
                     '''
                 }
@@ -121,7 +111,9 @@ pipeline {
             steps {
                 sh '''
                     cd backend
-                    cat > Dockerfile << 'EOF'
+                    # Use existing Dockerfile if present, otherwise create one
+                    if [ ! -f Dockerfile ]; then
+                        cat > Dockerfile << 'EOF'
 FROM python:3.9-slim
 WORKDIR /app
 COPY . .
@@ -129,6 +121,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 EXPOSE 5000
 CMD ["python", "app.py"]
 EOF
+                    fi
                     docker build -t ${DOCKER_IMAGE} .
                     echo "✅ Backend Docker image built: ${DOCKER_IMAGE}"
                 '''
@@ -139,12 +132,15 @@ EOF
             steps {
                 sh '''
                     cd frontend
-                    cat > Dockerfile << 'EOF'
+                    # Use existing Dockerfile if present, otherwise create one
+                    if [ ! -f Dockerfile ]; then
+                        cat > Dockerfile << 'EOF'
 FROM nginx:alpine
 COPY . /usr/share/nginx/html
 EXPOSE 80
 CMD ["nginx", "-g", "daemon off;"]
 EOF
+                    fi
                     docker build -t ${FRONTEND_IMAGE} .
                     echo "✅ Frontend Docker image built: ${FRONTEND_IMAGE}"
                 '''
@@ -158,7 +154,7 @@ EOF
                     sh '''
                         mkdir -p security-reports
                         
-                        # Scan backend container with multiple formats
+                        # Scan backend container
                         echo "Scanning backend image..."
                         trivy image ${DOCKER_IMAGE} \
                             --format table \
@@ -188,14 +184,9 @@ EOF
                         echo "✅ Container security scans completed successfully"
                         
                         # Display vulnerability summaries
-                        echo "=== BACKEND VULNERABILITIES ==="
+                        echo "=== BACKEND CONTAINER VULNERABILITIES ==="
                         if [ -f security-reports/backend-scan-table.txt ]; then
                             cat security-reports/backend-scan-table.txt
-                        fi
-                        
-                        echo "=== FRONTEND VULNERABILITIES ==="
-                        if [ -f security-reports/frontend-scan-table.txt ]; then
-                            cat security-reports/frontend-scan-table.txt
                         fi
                     '''
                 }
