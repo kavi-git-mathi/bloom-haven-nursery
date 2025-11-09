@@ -19,5 +19,8 @@ spec:
         image: kavitharc/bloom-haven-nursery:28
         ports:
         - containerPort: 5000
-        # Force Flask to bind to all interfaces
-        command: ["python", "app.py", "--host=0.0.0.0", "--port=5000"]
+        env:
+        - name: FLASK_RUN_HOST
+          value: "0.0.0.0"
+        - name: FLASK_RUN_PORT  
+          value: "5000"
