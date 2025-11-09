@@ -19,21 +19,3 @@ spec:
         image: kavitharc/bloom-haven-nursery-frontend:21
         ports:
         - containerPort: 3000
-        env:
-        - name: REACT_APP_API_URL
-          value: "http://nursery-backend-svc:5000"
-        - name: PORT
-          value: "3000"
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: nursery-frontend-svc
-spec:
-  type: LoadBalancer
-  selector:
-    app: nursery-frontend
-  ports:
-    - protocol: TCP
-      port: 80
-      targetPort: 3000

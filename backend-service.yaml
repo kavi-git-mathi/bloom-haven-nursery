@@ -1,0 +1,11 @@
+kind: Service
+metadata:
+  name: nursery-backend-svc
+spec:
+  type: ClusterIP
+  selector:
+    app: nursery-backend
+  ports:
+    - protocol: TCP
+      port: 5000
+      targetPort: 5000
