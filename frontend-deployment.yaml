@@ -19,32 +19,14 @@ spec:
         image: kavitharc/bloom-haven-nursery-frontend:28
         ports:
         - containerPort: 80
-        command: ["/bin/sh", "-c"]
-        args:
-          - |
-            # Create custom nginx config
-            cat > /etc/nginx/conf.d/default.conf << 'NGINX_CONFIG'
-            server {
-                listen 80;
-                server_name localhost;
-
-                location / {
-                    root /usr/share/nginx/html;
-                    index index.html index.htm;
-                    try_files \$uri \$uri/ /index.html;
-                }
-
-                location /api/ {
-                    proxy_pass http://nursery-backend-svc:5000/api/;
-                    proxy_set_header Host \$host;
-                    proxy_set_header X-Real-IP \$remote_addr;
-                }
-
-                location /images/ {
-                    proxy_pass http://nursery-backend-svc:5000/images/;
-                    proxy_set_header Host \$host;
-                }
-            }
-            NGINX_CONFIG
-            # Start nginx
-            nginx -g 'daemon off;'
+        volumeMounts:
+        - name: nginx-config
+          mountPath: /etc/nginx/conf.d/default.conf
+          subPath: nginx.conf
+      volumes:
+      - name: nginx-config
+        configMap:
+          name: nginx-config
+          items:
+          - key: nginx.conf
+            path: nginx.conf
