@@ -5,6 +5,7 @@ pipeline {
         DOCKER_IMAGE = "kavitharc/${APP_NAME}:${BUILD_NUMBER}"
         FRONTEND_IMAGE = "kavitharc/bloom-haven-nursery-frontend:${BUILD_NUMBER}"
         DOCKERHUB_CREDENTIALS = 'docker-credentials'
+        SONAR_SCANNER_HOME = tool 'sonar-scanner'
     }
     
     stages {
@@ -12,6 +13,22 @@ pipeline {
             steps {
                 checkout scm
                 echo "✅ Git Checkout Completed"
+            }
+        }
+        
+        stage('Install Security Tools') {
+            steps {
+                script {
+                    echo "🔧 Installing Security Scanning Tools..."
+                    sh '''
+                        # Install Trixy
+                        curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh -s -- -b /usr/local/bin
+                        
+                        # Verify installations
+                        trivy --version
+                        echo "✅ Security tools installed successfully"
+                    '''
+                }
             }
         }
         
@@ -37,6 +54,66 @@ pipeline {
                     python -m pytest tests/ --junitxml=../test-reports/junit.xml --cov-report=xml --cov=. || echo "Tests completed"
                 '''
                 junit allowEmptyResults: true, testResults: 'test-reports/junit.xml'
+            }
+        }
+        
+        stage('SonarQube Analysis') {
+            steps {
+                script {
+                    echo "🔍 Running SonarQube Analysis..."
+                    withSonarQubeEnv('sonarqube-server') {
+                        sh """
+                            cd backend
+                            ${SONAR_SCANNER_HOME}/bin/sonar-scanner \
+                              -Dsonar.projectKey=bloom-haven-nursery-backend \
+                              -Dsonar.projectName='Bloom Haven Nursery - Backend' \
+                              -Dsonar.sources=. \
+                              -Dsonar.host.url=\${SONAR_HOST_URL} \
+                              -Dsonar.login=\${SONAR_AUTH_TOKEN} \
+                              -Dsonar.python.coverage.reportPaths=../coverage.xml \
+                              -Dsonar.tests=tests \
+                              -Dsonar.test.inclusions='**/test_*.py,**/*_test.py' \
+                              -Dsonar.coverage.exclusions='**/tests/**,**/venv/**'
+                        """
+                    }
+                }
+            }
+        }
+        
+        stage('Source Code Security Scan') {
+            steps {
+                script {
+                    echo "🔒 Running Trixy Source Code Security Scan..."
+                    sh '''
+                        mkdir -p security-reports
+                        
+                        # Scan Python dependencies in backend
+                        echo "📋 Scanning Python dependencies..."
+                        trivy fs backend/ \
+                            --format table \
+                            --output security-reports/source-scan-table.txt \
+                            --severity HIGH,CRITICAL \
+                            --scanners vuln \
+                            --exit-code 0
+                        
+                        # Generate JSON report for archiving
+                        trivy fs backend/ \
+                            --format json \
+                            --output security-reports/source-scan.json \
+                            --severity HIGH,CRITICAL \
+                            --scanners vuln \
+                            --exit-code 0
+                            
+                        echo "✅ Source code security scan completed"
+                        
+                        # Display summary
+                        if [ -f security-reports/source-scan-table.txt ]; then
+                            echo "=== SECURITY SCAN SUMMARY ==="
+                            cat security-reports/source-scan-table.txt
+                        fi
+                    '''
+                }
+                archiveArtifacts artifacts: 'security-reports/source-scan.json', fingerprint: true
             }
         }
         
@@ -74,15 +151,21 @@ EOF
             }
         }
         
-        stage('Security Scan') {
+        stage('Container Security Scan') {
             steps {
                 script {
-                    echo "🔒 Running Trivy Security Scan..."
+                    echo "🐳 Running Container Security Scan..."
                     sh '''
                         mkdir -p security-reports
                         
-                        # SIMPLE FORMAT THAT GUARANTEED WORKS
+                        # Scan backend container with multiple formats
                         echo "Scanning backend image..."
+                        trivy image ${DOCKER_IMAGE} \
+                            --format table \
+                            --output security-reports/backend-scan-table.txt \
+                            --severity HIGH,CRITICAL \
+                            --exit-code 0
+                            
                         trivy image ${DOCKER_IMAGE} \
                             --format json \
                             --output security-reports/backend-scan.json \
@@ -91,15 +174,43 @@ EOF
                             
                         echo "Scanning frontend image..."
                         trivy image ${FRONTEND_IMAGE} \
+                            --format table \
+                            --output security-reports/frontend-scan-table.txt \
+                            --severity HIGH,CRITICAL \
+                            --exit-code 0
+                            
+                        trivy image ${FRONTEND_IMAGE} \
                             --format json \
                             --output security-reports/frontend-scan.json \
                             --severity HIGH,CRITICAL \
                             --exit-code 0
                             
-                        echo "✅ Security scans completed successfully"
+                        echo "✅ Container security scans completed successfully"
+                        
+                        # Display vulnerability summaries
+                        echo "=== BACKEND VULNERABILITIES ==="
+                        if [ -f security-reports/backend-scan-table.txt ]; then
+                            cat security-reports/backend-scan-table.txt
+                        fi
+                        
+                        echo "=== FRONTEND VULNERABILITIES ==="
+                        if [ -f security-reports/frontend-scan-table.txt ]; then
+                            cat security-reports/frontend-scan-table.txt
+                        fi
                     '''
                 }
-                archiveArtifacts artifacts: 'security-reports/*.json', fingerprint: true
+                archiveArtifacts artifacts: 'security-reports/*.json,security-reports/*.txt', fingerprint: true
+            }
+        }
+        
+        stage('Quality Gate') {
+            steps {
+                script {
+                    echo "🚦 Waiting for SonarQube Quality Gate..."
+                    timeout(time: 15, unit: 'MINUTES') {
+                        waitForQualityGate abortPipeline: false
+                    }
+                }
             }
         }
         
@@ -158,12 +269,17 @@ EOF
                 echo "📦 Application: ${APP_NAME}"
                 echo "📊 Build Result: ${currentBuild.result}"
                 echo "🔢 Build Number: ${BUILD_NUMBER}"
+                
+                // Archive all reports
+                archiveArtifacts artifacts: 'security-reports/*,test-reports/*', fingerprint: true
             }
         }
         success {
             echo "🎉 PIPELINE SUCCESS!"
             echo "✅ Code compiled and tested"
-            echo "✅ Docker images built and scanned successfully"
+            echo "✅ SonarQube analysis completed"
+            echo "✅ Security scans completed"
+            echo "✅ Docker images built and scanned"
             echo "✅ Images pushed to Docker Hub"
             echo "🐳 Backend:  ${DOCKER_IMAGE}"
             echo "🎨 Frontend: ${FRONTEND_IMAGE}"
