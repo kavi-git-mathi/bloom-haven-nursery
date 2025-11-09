@@ -65,39 +65,41 @@ EOF
         }
         
         stage('SonarQube Analysis') {
-            steps {
-                script {
-                    echo "🔍 Running SonarQube Analysis..."
-                    
-                    // Create sonar-project.properties if it doesn't exist
-                    sh '''
-                        cd backend
-                        if [ ! -f "sonar-project.properties" ]; then
-                            echo "Creating sonar-project.properties..."
-                            cat > sonar-project.properties << 'EOF'
+    steps {
+        script {
+            echo "🔍 Running SonarQube Analysis..."
+            
+            // Create sonar-project.properties with correct paths
+            sh '''
+                cd backend
+                cat > sonar-project.properties << 'EOF'
 sonar.projectKey=bloom-haven-nursery-backend
 sonar.projectName=Bloom Haven Nursery - Backend
 sonar.sources=.
 sonar.tests=tests
-sonar.python.coverage.reportPaths=../coverage.xml
+sonar.python.coverage.reportPaths=coverage.xml
 sonar.test.inclusions=**/test_*.py,**/*_test.py
-sonar.coverage.exclusions=**/tests/**,**/venv/**
+sonar.coverage.exclusions=**/tests/**,**/venv/**,**/test_*
+sonar.exclusions=**/venv/**,**/.git/**,**/*.pyc
 sonar.language=py
 EOF
-                        fi
-                    '''
-                    
-                    // Use SonarScanner with proper error handling
-                    def scannerHome = tool 'SonarScanner'
-                    withSonarQubeEnv('sonarqube-server') {
-                        sh """
-                            cd backend
-                            ${scannerHome}/bin/sonar-scanner
-                        """
-                    }
-                }
+                # Move coverage.xml to backend directory
+                if [ -f "../coverage.xml" ]; then
+                    cp ../coverage.xml .
+                fi
+            '''
+            
+            // Use SonarScanner with proper error handling
+            def scannerHome = tool 'SonarScanner'
+            withSonarQubeEnv('sonarqube-server') {
+                sh """
+                    cd backend
+                    ${scannerHome}/bin/sonar-scanner -X
+                """
             }
         }
+    }
+}
         
         stage('Source Code Security Scan') {
             steps {
