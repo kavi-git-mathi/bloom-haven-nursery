@@ -5,6 +5,7 @@ pipeline {
         DOCKER_IMAGE = "kavitharc/${APP_NAME}:${BUILD_NUMBER}"
         FRONTEND_IMAGE = "kavitharc/bloom-haven-nursery-frontend:${BUILD_NUMBER}"
         DOCKERHUB_CREDENTIALS = 'docker-credentials'
+        TRIVY_CACHE_DIR = "${WORKSPACE}/.trivy-cache"
     }
     
     stages {
@@ -20,8 +21,12 @@ pipeline {
                 script {
                     echo "🔧 Installing Security Scanning Tools..."
                     sh '''
-                        # Install Trixy only (SonarScanner is handled by Jenkins plugin)
-                        curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh -s -- -b /usr/local/bin
+                        # Install Trivy to workspace directory (no permissions needed)
+                        curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh -s -- -b ${WORKSPACE}/bin
+                        export PATH=${WORKSPACE}/bin:$PATH
+                        
+                        # Verify installation
+                        ${WORKSPACE}/bin/trivy --version
                         echo "✅ Security tools installed successfully"
                     '''
                 }
@@ -57,9 +62,28 @@ pipeline {
             steps {
                 script {
                     echo "🔍 Running SonarQube Analysis..."
+                    // Check if sonar-project.properties exists
+                    sh '''
+                        if [ -f "backend/sonar-project.properties" ]; then
+                            echo "Using existing sonar-project.properties"
+                        else
+                            echo "Creating sonar-project.properties..."
+                            cat > backend/sonar-project.properties << 'EOF'
+sonar.projectKey=bloom-haven-nursery-backend
+sonar.projectName=Bloom Haven Nursery - Backend
+sonar.sources=.
+sonar.tests=tests
+sonar.python.coverage.reportPaths=../coverage.xml
+sonar.test.inclusions=**/test_*.py,**/*_test.py
+sonar.coverage.exclusions=**/tests/**,**/venv/**
+sonar.language=py
+EOF
+                        fi
+                    '''
+                    
                     // Use the Jenkins-configured SonarScanner tool
                     def scannerHome = tool 'SonarScanner'
-                    withSonarQubeEnv() {
+                    withSonarQubeEnv('sonarqube-server') {
                         sh """
                             cd backend
                             ${scannerHome}/bin/sonar-scanner
@@ -74,12 +98,13 @@ pipeline {
                 script {
                     echo "🔒 Running Trixy Source Code Security Scan..."
                     sh '''
+                        export PATH=${WORKSPACE}/bin:$PATH
                         mkdir -p security-reports
                         
                         # Scan Python dependencies in backend
                         echo "📋 Scanning Python dependencies..."
                         cd backend
-                        trivy fs . \
+                        ${WORKSPACE}/bin/trivy fs . \
                             --format table \
                             --output ../security-reports/source-scan-table.txt \
                             --severity HIGH,CRITICAL \
@@ -87,7 +112,7 @@ pipeline {
                             --exit-code 0
                         
                         # Generate JSON report for archiving
-                        trivy fs . \
+                        ${WORKSPACE}/bin/trivy fs . \
                             --format json \
                             --output ../security-reports/source-scan.json \
                             --severity HIGH,CRITICAL \
@@ -152,30 +177,31 @@ EOF
                 script {
                     echo "🐳 Running Container Security Scan..."
                     sh '''
+                        export PATH=${WORKSPACE}/bin:$PATH
                         mkdir -p security-reports
                         
                         # Scan backend container
                         echo "Scanning backend image..."
-                        trivy image ${DOCKER_IMAGE} \
+                        ${WORKSPACE}/bin/trivy image ${DOCKER_IMAGE} \
                             --format table \
                             --output security-reports/backend-scan-table.txt \
                             --severity HIGH,CRITICAL \
                             --exit-code 0
                             
-                        trivy image ${DOCKER_IMAGE} \
+                        ${WORKSPACE}/bin/trivy image ${DOCKER_IMAGE} \
                             --format json \
                             --output security-reports/backend-scan.json \
                             --severity HIGH,CRITICAL \
                             --exit-code 0
                             
                         echo "Scanning frontend image..."
-                        trivy image ${FRONTEND_IMAGE} \
+                        ${WORKSPACE}/bin/trivy image ${FRONTEND_IMAGE} \
                             --format table \
                             --output security-reports/frontend-scan-table.txt \
                             --severity HIGH,CRITICAL \
                             --exit-code 0
                             
-                        trivy image ${FRONTEND_IMAGE} \
+                        ${WORKSPACE}/bin/trivy image ${FRONTEND_IMAGE} \
                             --format json \
                             --output security-reports/frontend-scan.json \
                             --severity HIGH,CRITICAL \
@@ -263,6 +289,9 @@ EOF
                 
                 // Archive all reports
                 archiveArtifacts artifacts: 'security-reports/*,test-reports/*', fingerprint: true
+                
+                // Clean up Trivy installation
+                sh 'rm -rf ${WORKSPACE}/bin/trivy'
             }
         }
         success {
